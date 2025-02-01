@@ -195,7 +195,7 @@ extern std::string CxbxGetLastErrorString(char * lpszFunction);
 // The reason of having EmuLogOutputEx in LOG_TEST_CASE is to allow dump to log directly for any test cases triggered.
 // Which will make developers easier to note which applications has triggered quicker, easier, and doesn't require any individual log enabled to capture them.
 // NOTE: This #define is here rather than Logging.h, because it has a dependency on CxbxKrnl_Xbe
-#define LOG_TEST_CASE(message) do { \
+/*#define LOG_TEST_CASE(message) do { \
 	static bool bTestCaseLogged = false; \
 	if (bTestCaseLogged) break; \
 	bTestCaseLogged = true; \
@@ -208,7 +208,16 @@ extern std::string CxbxGetLastErrorString(char * lpszFunction);
 	} \
 	EmuLogOutputEx(LOG_PREFIX, LOG_LEVEL::INFO, "Please report that %s shows the following message:\nLOG_TEST_CASE: %s\nIn %s (%s line %d)", \
 	CxbxKrnl_Xbe->m_szAsciiTitle, message, __func__, __FILE__, __LINE__); \
+} while (0)*/
+
+#define LOG_TEST_CASE(message) do { \
+	static bool bTestCaseLogged = false; \
+	if (bTestCaseLogged) break; \
+	bTestCaseLogged = true; \
+	EmuLogOutputEx(LOG_PREFIX, LOG_LEVEL::INFO, "Please report that %s shows the following message:\nLOG_TEST_CASE: %s\nIn %s (%s line %d)", \
+	CxbxKrnl_Xbe->m_szAsciiTitle, message, __func__, __FILE__, __LINE__); \
 } while (0)
+
 // was g_pCertificate->wszTitleName
 
 #endif

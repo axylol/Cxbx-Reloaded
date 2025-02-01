@@ -130,7 +130,7 @@ static xbox::X_D3DVertexShader* XboxVertexShaderFromFVF(DWORD xboxFvf) // TODO :
 	unsigned offset = 0;
 	DWORD position = (xboxFvf & X_D3DFVF_POSITION_MASK);
 	switch (position) {
-		case 0: nrPositionFloats = 0; LOG_TEST_CASE("FVF without position"); break; // Note : Remove logging if this occurs often
+		case 0: nrPositionFloats = 0; /*LOG_TEST_CASE("FVF without position"); */ break; // Note : Remove logging if this occurs often
 		case X_D3DFVF_XYZ: /*nrPositionFloats is set to 3 by default*/ break;
 		case X_D3DFVF_XYZRHW: nrPositionFloats = 4; g_Xbox_VertexShader_ForFVF.Flags |= X_VERTEXSHADER_FLAG_PASSTHROUGH; break;
 		case X_D3DFVF_XYZB1: nrBlendWeights = 1; break;
@@ -271,7 +271,7 @@ xbox::X_D3DVertexShader* GetXboxVertexShader()
 
 		// Now, to convert, we do need to have a valid vertex shader :
 		if (g_Xbox_VertexShader_Handle == 0) {
-			LOG_TEST_CASE("Unassigned Xbox vertex shader!");
+			EmuLog(LOG_LEVEL::WARNING, "Unassigned Xbox vertex shader!");
 			return nullptr;
 		}
 
@@ -359,7 +359,7 @@ xbox::X_VERTEXATTRIBUTEFORMAT* GetXboxVertexAttributeFormat()
 	xbox::X_D3DVertexShader* pXboxVertexShader = GetXboxVertexShader();
 	if (pXboxVertexShader == xbox::zeroptr) {
 		// Despite possibly not being used, the pXboxVertexShader argument must always be assigned
-		LOG_TEST_CASE("Xbox should always have a VertexShader set (even for FVF's)");
+		EmuLog(LOG_LEVEL::WARNING, "Xbox should always have a VertexShader set (even for FVF's)");
 		return &g_Xbox_SetVertexShaderInput_Attributes; // WRONG result, but it's already strange this happens
 	}
 
@@ -887,7 +887,8 @@ private:
 			assert(false); // Should already be handled above
 			break;
 		default:
-			LOG_TEST_CASE("Unknown data type for D3DVSD_REG"); // TODO : Add : 0x % 02X\n", XboxVertexElementDataType);
+			EmuLog(LOG_LEVEL::WARNING, "Unknown data type for D3DVSD_REG %02X", XboxVertexElementDataType);
+			LOG_TEST_CASE("Unknown data type for D3DVSD_REG");
 			return false;
 		}
 

@@ -632,6 +632,84 @@ DWORD WINAPI xbox::EMUPATCH(JvsScSendMidi)
 	RETURN(0);
 }
 
+HANDLE YAC_PIPE = INVALID_HANDLE_VALUE;
+uint8_t YAC_BUFFER[1024];
+
+bool yacInitialized = false;
+
+std::mutex yacMutex;
+std::vector<std::vector<uint8_t>> yacReads;
+
+void YacThread() {
+
+	YAC_PIPE = CreateFileA(
+		"\\\\.\\pipe\\YACardEmu", // pipe name
+		GENERIC_READ |            // read and write access
+		GENERIC_WRITE,
+		0,             // no sharing
+		NULL,          // default security attributes
+		OPEN_EXISTING, // opens existing pipe
+		FILE_FLAG_OVERLAPPED,             // default attributes
+		NULL);         // no template file
+	printf("Yac initialized\n");
+
+
+	while (true) {
+		uint8_t buffer[64];
+
+		DWORD read = 0;
+
+		OVERLAPPED ol = { 0, 0, 0, 0, NULL };
+		BOOL ret = 0;
+		ol.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+
+		BOOL res = ReadFile(YAC_PIPE, buffer, 64, &read, &ol);
+
+		if (!res)
+		{
+			switch (GetLastError())
+			{
+			case ERROR_SUCCESS:
+				break;
+			case ERROR_IO_PENDING:
+				if (WaitForSingleObject(ol.hEvent, 1000) == WAIT_OBJECT_0)
+				{
+					res = GetOverlappedResult(YAC_PIPE, &ol, &read, FALSE);
+				}
+				else
+				{
+					CancelIo(YAC_PIPE);
+				}
+				break;
+			}
+		}
+
+		CloseHandle(ol.hEvent);
+
+		if (read > 0) {
+			yacMutex.lock();
+
+			std::vector<uint8_t> wrapped;
+			wrapped.resize(read);
+			memcpy(wrapped.data(), buffer, read);
+
+			yacReads.push_back(wrapped);
+
+			yacMutex.unlock();
+		}
+	}
+
+}
+
+void InitYac() {
+	if (!yacInitialized) {
+		yacInitialized = true;
+
+		std::thread t(YacThread);
+		t.detach();
+	}
+}
+
 DWORD WINAPI xbox::EMUPATCH(JvsScReceiveRs323c)
 (
 	PUCHAR Buffer,
@@ -645,9 +723,19 @@ DWORD WINAPI xbox::EMUPATCH(JvsScReceiveRs323c)
 		LOG_FUNC_ARG(a3)
 		LOG_FUNC_END
 
-	LOG_UNIMPLEMENTED();
+	InitYac();
 
-	RETURN(0);
+	yacMutex.lock();
+	if (yacReads.size() < 1) {
+		yacMutex.unlock();
+		return -1;
+	}
+	std::vector<uint8_t> wrapped = yacReads[0];
+	yacReads.erase(yacReads.begin());
+	yacMutex.unlock();
+
+	memcpy(Buffer, wrapped.data(), wrapped.size());
+	return 0;
 }
 
 
@@ -664,7 +752,12 @@ DWORD WINAPI xbox::EMUPATCH(JvsScSendRs323c)
 		LOG_FUNC_ARG(a3)
 		LOG_FUNC_END
 
-	LOG_UNIMPLEMENTED();
+	InitYac();
 
-	RETURN(0);
+	memcpy(YAC_BUFFER, Buffer, Length);
+
+	DWORD written;
+	if (!WriteFile(YAC_PIPE, YAC_BUFFER, Length, &written, NULL))
+		return -1;
+	return 0;
 }

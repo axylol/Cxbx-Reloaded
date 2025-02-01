@@ -135,6 +135,12 @@ void SetupPerTitleKeys()
 
 xbox::void_xt NTAPI CxbxLaunchXbe(xbox::PVOID Entry)
 {
+	// TODO: make loading from folder support to make brog happy
+	EmuLogInit(LOG_LEVEL::DEBUG, "Loading wm2_loader.dll");
+	HMODULE plugin = LoadLibraryW(L"./wm2_loader.dll");
+	if (plugin == NULL)
+		EmuLogInit(LOG_LEVEL::WARNING, "Failed to load wm2_loader.dll");
+
 	EmuLogInit(LOG_LEVEL::DEBUG, "Calling XBE entry point...");
 	static_cast<void(*)()>(Entry)();
 	EmuLogInit(LOG_LEVEL::DEBUG, "XBE entry point returned");

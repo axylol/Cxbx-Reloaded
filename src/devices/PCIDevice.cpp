@@ -27,28 +27,26 @@
 
 #include "PCIDevice.h"
 
-bool PCIDevice::GetIOBar(uint32_t port, PCIBar* bar)
+PCIBar* PCIDevice::GetIOBar(uint32_t port)
 {
 	for (auto it = m_BAR.begin(); it != m_BAR.end(); ++it) {
 		if (it->second.reg.Raw.type == PCI_BAR_TYPE_IO && (port >= it->second.reg.IO.address) && (port < it->second.reg.IO.address + it->second.size)) {
-			*bar = it->second;
-			return true;
+			return &it->second;
 		}
 	}
 
-	return false;
+	return nullptr;
 }
 
-bool PCIDevice::GetMMIOBar(uint32_t addr, PCIBar* bar)
+PCIBar* PCIDevice::GetMMIOBar(uint32_t addr)
 {
 	for (auto it = m_BAR.begin(); it != m_BAR.end(); ++it) {
 		if (it->second.reg.Raw.type == PCI_BAR_TYPE_MEMORY && (addr >= (it->second.reg.Memory.address << 4)) && (addr < (it->second.reg.Memory.address << 4) + it->second.size)) {
-			*bar = it->second;
-			return true;
+			return &it->second;
 		}
 	}
 
-	return false;
+	return nullptr;
 }
 
 bool PCIDevice::RegisterBAR(int index, uint32_t size, uint32_t defaultValue)

@@ -123,8 +123,8 @@ public:
 
 	// PCI Device Implementation
 public:
-	bool GetIOBar(uint32_t port, PCIBar* bar);
-	bool GetMMIOBar(uint32_t addr, PCIBar * bar);
+	PCIBar* GetIOBar(uint32_t port);
+	PCIBar* GetMMIOBar(uint32_t addr);
 	bool RegisterBAR(int index, uint32_t size, uint32_t defaultValue);
 	bool UpdateBAR(int index, uint32_t newValue);
 	uint32_t ReadConfigRegister(uint32_t reg);

@@ -56,14 +56,18 @@ void JvsIo::Update()
 	}
 	previousCoinButtonsState = currentCoinButtonState;
 
-	// TODO: Update Jvs inputs based on user configuration
-	// For now, hardcode the inputs for the game we are currently testing (Ollie King)
-	Inputs.switches.player[0].start = GetAsyncKeyState('1');                                                        // Start
-	Inputs.analog[1].value = GetAsyncKeyState(VK_LEFT) ? 0x9000 : (GetAsyncKeyState(VK_RIGHT) ? 0x7000 : 0x8000);   // Board Swing
-	Inputs.switches.player[0].up = GetAsyncKeyState(VK_UP);                                                         // Board Front
-	Inputs.switches.player[0].down = GetAsyncKeyState(VK_DOWN);                                                     // Board Rear
-	Inputs.switches.player[0].button[0] = GetAsyncKeyState('A');                                                    // Left Button
-	Inputs.switches.player[0].button[1] = GetAsyncKeyState('S');                                                    // Right Button
+	uint16_t steer = INT16_MAX;
+	if (GetAsyncKeyState('A'))
+		steer -= INT16_MAX;
+	if (GetAsyncKeyState('D'))
+		steer += INT16_MAX;
+	Inputs.analog[0].value = steer;
+
+	Inputs.analog[1].value = GetAsyncKeyState('W') ? UINT16_MAX : 0;
+	Inputs.analog[2].value = GetAsyncKeyState('S') ? UINT16_MAX : 0;
+
+	Inputs.switches.player[0].button[8] = GetAsyncKeyState('E'); // View Change
+	Inputs.switches.player[0].button[9] = GetAsyncKeyState('Q'); // Interrupt
 }
 
 uint8_t JvsIo::GetDeviceId()
@@ -251,6 +255,11 @@ int JvsIo::Jvs_Command_22_ReadAnalogInputs(uint8_t* data)
 	return 1;
 }
 
+int JvsIo::Jvs_Command_30_DecreaseCoin(uint8_t* data) {
+	ResponseBuffer.push_back(ReportCode::Handled);
+	return 3;
+}
+
 int JvsIo::Jvs_Command_32_GeneralPurposeOutput(uint8_t* data)
 {
 	uint8_t banks = data[1];
@@ -261,6 +270,28 @@ int JvsIo::Jvs_Command_32_GeneralPurposeOutput(uint8_t* data)
 
 	// Input data size is 1 byte indicating the number of banks, followed by one byte per bank
 	return 1 + banks;
+}
+
+int JvsIo::Jvs_Command_70_CustomNamco(uint8_t* data)
+{
+	uint8_t command = data[1];
+	int size = 1;
+	switch (command)
+	{
+	case 0x18: { // JVS_NAMCO_UNIQUE_PL
+		size += 4;
+
+		ResponseBuffer.push_back(ReportCode::Handled);
+		ResponseBuffer.push_back(0x00);
+		break;
+	}
+	default: {
+		ResponseBuffer[0] = StatusCode::UnsupportedCommand;
+		printf("JvsIo::Jvs_Command_70_CustomNamco: Unhandled NamcoCommand %02X\n", command);
+		return -1;
+	}
+	}
+	return size;
 }
 
 uint8_t JvsIo::GetByte(uint8_t* &buffer)
@@ -306,7 +337,15 @@ void JvsIo::HandlePacket(jvs_packet_header_t* header, std::vector<uint8_t>& pack
 			case 0x20: i += Jvs_Command_20_ReadSwitchInputs(command_data); break;
 			case 0x21: i += Jvs_Command_21_ReadCoinInputs(command_data); break;
 			case 0x22: i += Jvs_Command_22_ReadAnalogInputs(command_data); break;
+			case 0x30: i += Jvs_Command_30_DecreaseCoin(command_data); break;
 			case 0x32: i += Jvs_Command_32_GeneralPurposeOutput(command_data); break;
+			case 0x70: {
+				int size = Jvs_Command_70_CustomNamco(command_data);
+				if (size < 0)
+					return;
+				i += size;
+				break;
+			}
 			default:
 				// Overwrite the verly-optimistic StatusCode::StatusOkay with Status::Unsupported command
 				// Don't process any further commands. Existing processed commands must still return their responses.

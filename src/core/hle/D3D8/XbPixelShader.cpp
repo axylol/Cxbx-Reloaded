@@ -843,7 +843,7 @@ IDirect3DPixelShader9* GetFixedFunctionShader()
 		states[i].COLORARG2 = (float)XboxTextureStates.Get(i, xbox::X_D3DTSS_COLORARG2);
 
 		auto alphaOp = XboxTextureStates.Get(i, xbox::X_D3DTSS_ALPHAOP);
-		if (alphaOp == X_D3DTOP_DISABLE) LOG_TEST_CASE("Alpha stage disabled when colour stage is enabled");
+		//if (alphaOp == X_D3DTOP_DISABLE) LOG_TEST_CASE("Alpha stage disabled when colour stage is enabled");
 
 		states[i].ALPHAOP = (float)alphaOp;
 		states[i].ALPHAARG0 = (float)XboxTextureStates.Get(i, xbox::X_D3DTSS_ALPHAARG0);

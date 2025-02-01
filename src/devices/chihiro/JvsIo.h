@@ -46,7 +46,7 @@ typedef struct _jvs_switch_player_inputs_t {
 	bool down = false;
 	bool left = false;
 	bool right = false;
-	bool button[7] = { false };
+	bool button[10] = { false };
 
 	uint8_t GetByte0() {
 		uint8_t value = 0;
@@ -68,6 +68,9 @@ typedef struct _jvs_switch_player_inputs_t {
 		value |= button[4] ? 1 << 5 : 0;
 		value |= button[5] ? 1 << 4 : 0;
 		value |= button[6] ? 1 << 3 : 0;
+		value |= button[7] ? 1 << 2 : 0;
+		value |= button[8] ? 1 << 1 : 0;
+		value |= button[9] ? 1 << 0 : 0;
 		return value;
 	}
 } jvs_switch_player_inputs_t;
@@ -195,7 +198,9 @@ private:
 	int Jvs_Command_20_ReadSwitchInputs(uint8_t *data);
 	int Jvs_Command_21_ReadCoinInputs(uint8_t *data);
 	int Jvs_Command_22_ReadAnalogInputs(uint8_t *data);
+	int Jvs_Command_30_DecreaseCoin(uint8_t* data);
 	int Jvs_Command_32_GeneralPurposeOutput(uint8_t *data);
+	int Jvs_Command_70_CustomNamco(uint8_t* data);
 
 	bool BroadcastPacket;					// Set when the last command was a broadcast
 	uint8_t *pSense = nullptr;				// Pointer to Sense line

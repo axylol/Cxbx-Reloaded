@@ -35,6 +35,7 @@
 	path = import/SDL2
 	url = https://github.com/libsdl-org/SDL
 	shallow = true
+	branch = SDL2
 [submodule "import/libusb"]
 	path = import/libusb
 	url = https://github.com/Cxbx-Reloaded/libusb

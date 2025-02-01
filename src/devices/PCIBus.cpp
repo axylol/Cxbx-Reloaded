@@ -82,11 +82,11 @@ bool PCIBus::IORead(uint32_t addr, uint32_t* data, unsigned size)
 		break;
 	default:
 		for (auto it = m_Devices.begin(); it != m_Devices.end(); ++it) {
-			PCIBar bar;
-			if (it->second->GetIOBar(addr, &bar)) {
-				*data = it->second->IORead(bar.index, addr - bar.reg.IO.address, size);
-				return true;
-			}
+			PCIBar* bar = it->second->GetIOBar(addr);
+			if (!bar)
+				continue;
+			*data = it->second->IORead(bar->index, addr - bar->reg.IO.address, size);
+			return true;
 		}
 	}
 
@@ -110,11 +110,11 @@ bool PCIBus::IOWrite(uint32_t addr, uint32_t value, unsigned size)
 		break;
 	default:
 		for (auto it = m_Devices.begin(); it != m_Devices.end(); ++it) {
-			PCIBar bar;
-			if (it->second->GetIOBar(addr, &bar)) {
-				it->second->IOWrite(bar.index, addr - bar.reg.IO.address, value, size);
-				return true;
-			}
+			PCIBar* bar = it->second->GetIOBar(addr);
+			if (!bar)
+				continue;
+			it->second->IOWrite(bar->index, addr - bar->reg.IO.address, value, size);
+			return true;
 		}
 	}
 
@@ -124,11 +124,11 @@ bool PCIBus::IOWrite(uint32_t addr, uint32_t value, unsigned size)
 bool PCIBus::MMIORead(uint32_t addr, uint32_t* data, unsigned size)
 {
 	for (auto it = m_Devices.begin(); it != m_Devices.end(); ++it) {
-		PCIBar bar;
-		if (it->second->GetMMIOBar(addr, &bar)) {
-			*data = it->second->MMIORead(bar.index, addr - (bar.reg.Memory.address << 4), size);
-			return true;
-		}
+		PCIBar* bar = it->second->GetMMIOBar(addr);
+		if (!bar)
+			continue;
+		*data = it->second->MMIORead(bar->index, addr - (bar->reg.Memory.address << 4), size);
+		return true;
 	}
 
 	return false;
@@ -137,11 +137,11 @@ bool PCIBus::MMIORead(uint32_t addr, uint32_t* data, unsigned size)
 bool PCIBus::MMIOWrite(uint32_t addr, uint32_t value, unsigned size)
 {
 	for (auto it = m_Devices.begin(); it != m_Devices.end(); ++it) {
-		PCIBar bar;
-		if (it->second->GetMMIOBar(addr, &bar)) {
-			it->second->MMIOWrite(bar.index, addr - (bar.reg.Memory.address << 4), value, size);
-			return true;
-		}
+		PCIBar* bar = it->second->GetMMIOBar(addr);
+		if (!bar)
+			continue;
+		it->second->MMIOWrite(bar->index, addr - (bar->reg.Memory.address << 4), value, size);
+		return true;
 	}
 
 	return false;

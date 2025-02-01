@@ -296,13 +296,13 @@ void EmuUpdateLLEStatus(uint32_t XbLibScan)
     unsigned int FlagsLLE;
     g_EmuShared->GetFlagsLLE(&FlagsLLE);
 
-    if ((FlagsLLE & LLE_GPU) == false
+    /*if ((FlagsLLE & LLE_GPU) == false
         && !((XbLibScan & XbSymbolLib_D3D8) > 0
             || (XbLibScan & XbSymbolLib_D3D8LTCG) > 0)) {
         bLLE_GPU = true;
         FlagsLLE ^= LLE_GPU;
         EmuOutputMessage(XB_OUTPUT_MESSAGE_INFO, "Fallback to LLE GPU.");
-    }
+    }*/
 
     if ((FlagsLLE & LLE_APU) == false
         && (XbLibScan & XbSymbolLib_DSOUND) == 0) {
@@ -350,7 +350,7 @@ void EmuHLEIntercept(Xbe::Header *pXbeHeader)
 			XbLibScan |= XbLibFlag;
 
 			// Keep certain library versions for plugin usage.
-			if ((XbLibFlag & (XbSymbolLib_D3D8 | XbSymbolLib_D3D8LTCG)) > 0) {
+            if ((XbLibFlag & (XbSymbolLib_D3D8 | XbSymbolLib_D3D8LTCG | XbSymbolLib_D3DX8)) > 0) {
 				if (g_LibVersion_D3D8 < BuildVersion) {
 					g_LibVersion_D3D8 = BuildVersion;
 				}
