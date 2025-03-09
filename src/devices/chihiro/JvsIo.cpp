@@ -278,7 +278,7 @@ int JvsIo::Jvs_Command_70_CustomNamco(uint8_t* data)
 	int size = 1;
 	switch (command)
 	{
-	case 0x18: { // JVS_NAMCO_UNIQUE_PL
+	case 0x18: { // JVS_NAMCO_UNIQUE_PL 
 		size += 4;
 
 		ResponseBuffer.push_back(ReportCode::Handled);

@@ -402,6 +402,8 @@ void EmuHLEIntercept(Xbe::Header *pXbeHeader)
 	sstream << cachePath << szTitleName << "-" << std::hex << uiHash << ".ini";
 	std::string filename = sstream.str();
 
+    std::printf("Symbol Cache File: %s\n", filename.c_str());
+
 	// This will fire when we exit this function scope; either after detecting a previous cache file, or when one is created
 	CxbxDebuggerScopedMessage symbolCacheFilename(filename);
 

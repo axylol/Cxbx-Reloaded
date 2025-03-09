@@ -5909,6 +5909,16 @@ void CreateHostResource(xbox::X_D3DResource *pResource, DWORD D3DUsage, int iTex
             return;
         }
 
+		ComPtr<IDirect3DSurface> tempHostSurface; // for X_D3DRTYPE_SURFACE
+
+		if (XboxResourceType == xbox::X_D3DRTYPE_SURFACE) {
+			HRESULT hRet = g_pD3DDevice->CreateOffscreenPlainSurface(hostWidth, hostHeight, PCFormat, D3DPOOL_SYSTEMMEM, tempHostSurface.GetAddressOf(), nullptr);
+			if (hRet != D3D_OK) {
+				EmuLog(LOG_LEVEL::WARNING, "CreateOffscreenPlainSurface %s failed!", ResourceTypeName);
+				return;;
+			}
+		}
+
 		DWORD dwCubeFaceOffset = 0;
 		D3DCUBEMAP_FACES last_face = (bCubemap) ? D3DCUBEMAP_FACE_NEGATIVE_Z : D3DCUBEMAP_FACE_POSITIVE_X;
 
@@ -5954,7 +5964,7 @@ void CreateHostResource(xbox::X_D3DResource *pResource, DWORD D3DUsage, int iTex
 
 				switch (XboxResourceType) {
 				case xbox::X_D3DRTYPE_SURFACE:
-					hRet = pNewHostSurface->LockRect(&LockedRect, nullptr, D3DLockFlags);
+					hRet = tempHostSurface->LockRect(&LockedRect, nullptr, D3DLockFlags);
 					break;
 				case xbox::X_D3DRTYPE_VOLUME:
 					hRet = pNewHostVolume->LockBox(&LockedBox, nullptr, D3DLockFlags);
@@ -6056,7 +6066,7 @@ void CreateHostResource(xbox::X_D3DResource *pResource, DWORD D3DUsage, int iTex
 				// Unlock the host resource
 				switch (XboxResourceType) {
 				case xbox::X_D3DRTYPE_SURFACE:
-					hRet = pNewHostSurface->UnlockRect();
+					hRet = tempHostSurface->UnlockRect();
 					break;
 				case xbox::X_D3DRTYPE_VOLUME:
 					hRet = pNewHostVolume->UnlockBox();
@@ -6109,7 +6119,10 @@ void CreateHostResource(xbox::X_D3DResource *pResource, DWORD D3DUsage, int iTex
         // This is necessary because CopyRects/StretchRects only works on resources in the DEFAULT pool
         // But resources in this pool are not lockable: We must use UpdateSurface/UpdateTexture instead!
         switch (XboxResourceType) {
-        case xbox::X_D3DRTYPE_SURFACE:
+		case xbox::X_D3DRTYPE_SURFACE: {
+			hRet = g_pD3DDevice->UpdateSurface(tempHostSurface.Get(), NULL, pNewHostSurface.Get(), NULL);
+			break;
+		}
         case xbox::X_D3DRTYPE_VOLUME:
             // We didn't use a copy for Surfaces or Volumes
             break;
@@ -6127,7 +6140,7 @@ void CreateHostResource(xbox::X_D3DResource *pResource, DWORD D3DUsage, int iTex
         }
 
         if (hRet != D3D_OK) {
-            EmuLog(LOG_LEVEL::WARNING, "Updating host %s failed!", ResourceTypeName);
+            EmuLog(LOG_LEVEL::WARNING, "Updating host %s failed! 0x%08X", ResourceTypeName, hRet);
         }
 
 		// Debug resource dumping
